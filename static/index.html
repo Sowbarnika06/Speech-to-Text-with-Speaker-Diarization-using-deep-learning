@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxScribe AI - Speech-to-Text & Speaker Diarization</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Background Accents -->
+    <div class="glow-sphere glow-sphere-1"></div>
+    <div class="glow-sphere glow-sphere-2"></div>
+    <div class="glow-sphere glow-sphere-3"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i data-lucide="waves" class="logo-icon"></i>
+                <h1 class="gradient-text">VoxScribe AI</h1>
+            </div>
+            <p class="subtitle">High-performance, local Speech-to-Text and Speaker Diarization</p>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Panel: Control Center -->
+            <section class="panel-section control-panel">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <i data-lucide="sliders" class="header-icon"></i>
+                        <h2>Configuration</h2>
+                    </div>
+                    
+                    <form id="transcribe-form">
+                        <!-- Dropzone Area -->
+                        <div class="form-group">
+                            <label class="field-label">Audio File</label>
+                            <div class="dropzone" id="audio-dropzone">
+                                <input type="file" id="audio-file" accept="audio/*" class="file-input">
+                                <div class="dropzone-content">
+                                    <i data-lucide="upload-cloud" class="dropzone-icon"></i>
+                                    <p class="dropzone-text">Drag & drop your audio file here or <span class="browse-link">browse</span></p>
+                                    <p class="dropzone-subtext">Supports WAV, FLAC, OGG (mono recommended)</p>
+                                </div>
+                                <div class="file-info-box hidden" id="file-info">
+                                    <i data-lucide="file-audio" class="file-icon"></i>
+                                    <div class="file-details">
+                                        <p class="file-name" id="selected-file-name"></p>
+                                        <p class="file-size" id="selected-file-size"></p>
+                                    </div>
+                                    <button type="button" class="remove-file-btn" id="remove-file-btn">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Whisper Model Size -->
+                        <div class="form-group">
+                            <label for="whisper-model" class="field-label">Whisper Model Size</label>
+                            <div class="select-wrapper">
+                                <select id="whisper-model" name="whisper_model">
+                                    <option value="tiny">Tiny (Fastest, ~75MB)</option>
+                                    <option value="base" selected>Base (Recommended, ~140MB)</option>
+                                    <option value="small">Small (Better, ~460MB)</option>
+                                    <option value="medium">Medium (Accurate, ~1.5GB)</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="select-arrow"></i>
+                            </div>
+                            <span class="field-help">Runs locally on CPU. Larger models offer higher accuracy but take longer.</span>
+                        </div>
+
+                        <!-- Diarization Pipeline -->
+                        <div class="form-group">
+                            <label class="field-label">Diarization Pipeline</label>
+                            <div class="radio-group">
+                                <label class="radio-label active" id="label-wespeaker">
+                                    <input type="radio" name="diarization_pipeline" value="wespeaker" checked>
+                                    <div class="radio-content">
+                                        <span class="radio-title">WeSpeaker Clustering</span>
+                                        <span class="radio-desc">Offline, no token required</span>
+                                    </div>
+                                </label>
+                                <label class="radio-label" id="label-pyannote">
+                                    <input type="radio" name="diarization_pipeline" value="pyannote">
+                                    <div class="radio-content">
+                                        <span class="radio-title">PyAnnote Pipeline</span>
+                                        <span class="radio-desc">Requires Hugging Face token</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Hugging Face Token (Conditional) -->
+                        <div class="form-group hidden" id="hf-token-group">
+                            <label for="hf-token" class="field-label">Hugging Face Token</label>
+                            <div class="input-wrapper">
+                                <i data-lucide="key" class="input-icon"></i>
+                                <input type="password" id="hf-token" name="hf_token" placeholder="hf_...">
+                            </div>
+                            <span class="field-help">Required to load pyannote/speaker-diarization-3.1. Accept terms on Hugging Face first.</span>
+                        </div>
+
+                        <!-- Speaker Count -->
+                        <div class="form-group">
+                            <div class="checkbox-header">
+                                <label class="field-label">Speaker Count</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-speakers" checked>
+                                    <span class="slider round"></span>
+                                    <span class="toggle-text">Auto-detect</span>
+                                </label>
+                            </div>
+                            <div class="speaker-slider-container disabled" id="speaker-slider-container">
+                                <div class="slider-val-box">
+                                    <input type="range" id="num-speakers" min="1" max="10" value="2" class="range-slider" disabled>
+                                    <span class="slider-value-display" id="speaker-val-display">2</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="submit-btn" id="submit-btn" disabled>
+                            <span>Transcribe & Diarize</span>
+                            <i data-lucide="play" class="btn-icon"></i>
+                        </button>
+                    </form>
+                </div>
+            </section>
+            
+            <!-- Right Panel: Results & Transcript Player -->
+            <section class="panel-section results-panel">
+                
+                <!-- Idle State Card -->
+                <div class="card glass-card fill-height" id="idle-state">
+                    <div class="idle-content">
+                        <div class="pulse-icon-wrapper">
+                            <i data-lucide="audio-lines" class="idle-icon"></i>
+                        </div>
+                        <h3>Ready for Audio Upload</h3>
+                        <p>Configure the options and upload an audio file to view the speaker-diarized transcript.</p>
+                        <div class="feature-badges">
+                            <span class="feature-badge"><i data-lucide="cpu"></i> CPU Optimized</span>
+                            <span class="feature-badge"><i data-lucide="shield-check"></i> 100% Private</span>
+                            <span class="feature-badge"><i data-lucide="users"></i> Speaker Clustering</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress State Card -->
+                <div class="card glass-card fill-height hidden" id="progress-state">
+                    <div class="progress-content">
+                        <div class="progress-ring-container">
+                            <div class="circular-progress">
+                                <svg class="progress-svg" viewBox="0 0 100 100">
+                                    <circle class="bg-circle" cx="50" cy="50" r="45"></circle>
+                                    <circle class="fg-circle" cx="50" cy="50" r="45" id="progress-circle"></circle>
+                                </svg>
+                                <div class="progress-text-display">
+                                    <span class="percent-num" id="progress-percent">0%</span>
+                                    <span class="percent-label">Running...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 id="current-step-title">Initializing transcription pipeline...</h3>
+                        <p class="step-desc">This may take a few minutes as deep learning models run locally on your CPU.</p>
+                        
+                        <!-- Log Terminal -->
+                        <div class="terminal-log">
+                            <div class="terminal-header">
+                                <span class="term-dot red"></span>
+                                <span class="term-dot yellow"></span>
+                                <span class="term-dot green"></span>
+                                <span class="term-title">Execution Log</span>
+                            </div>
+                            <div class="terminal-body" id="log-terminal">
+                                <div class="log-line system">Waiting for process startup...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result State Card -->
+                <div class="card glass-card fill-height hidden" id="result-state">
+                    <div class="results-container">
+                        <!-- Toolbar -->
+                        <div class="results-toolbar">
+                            <div class="search-box">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" id="search-transcript" placeholder="Search transcript...">
+                            </div>
+                            <div class="export-actions">
+                                <button type="button" class="action-btn" id="export-csv">
+                                    <i data-lucide="download"></i>
+                                    <span>Export CSV</span>
+                                </button>
+                                <button type="button" class="action-btn" id="export-json">
+                                    <i data-lucide="braces"></i>
+                                    <span>JSON</span>
+                                </button>
+                                <button type="button" class="action-btn secondary" id="reset-app">
+                                    <i data-lucide="rotate-ccw"></i>
+                                    <span>New File</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sticky Audio Player -->
+                        <div class="audio-player-card">
+                            <div class="player-info">
+                                <i data-lucide="file-audio" class="player-icon"></i>
+                                <div>
+                                    <p class="player-filename" id="player-file-name">audio_file.wav</p>
+                                    <p class="player-duration" id="player-time-display">00:00 / 00:00</p>
+                                </div>
+                            </div>
+                            <audio id="main-audio-player" controls class="custom-audio"></audio>
+                        </div>
+
+                        <!-- Transcript Body -->
+                        <div class="transcript-viewport">
+                            <div class="transcript-timeline" id="transcript-timeline">
+                                <!-- Dynamically populated segments -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Script Entry -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

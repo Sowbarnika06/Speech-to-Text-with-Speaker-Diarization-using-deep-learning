@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# App temporary files
+temp/
+
+# Testing assets
+dummy_voice.wav
+
+# IDE
+.idea/
+.vscode/
+.gemini/
+*.log
