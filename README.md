@@ -1,7 +1,7 @@
 # Speech-to-Text-with-Speaker-Diarization-using-deep-learning
 # VoxScribe AI - Local Speech-to-Text & Speaker Diarization
 VoxScribe AI is a high-performance, locally-run web application designed for Speech-to-Text (STT) transcription and Speaker Diarization (SD) using state-of-the-art deep learning models. It runs entirely on your local machine, ensuring complete privacy for your audio recordings.
-![VoxScribe AI Interface](screenshot.png)
+VoxScribe AI is a high-performance, locally-run web application for Speech-to-Text transcription and Speaker Diarization using OpenAI Whisper and PyAnnote.
 ## Key Features
 - **Local Deep Learning Speech-to-Text**: Utilizes OpenAI's Whisper model (supporting sizes from `tiny` to `large`) running locally on CPU.
 - **Dual Speaker Diarization Pipelines**:
